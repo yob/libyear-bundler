@@ -2,6 +2,7 @@ require 'optparse'
 require 'libyear_bundler/version'
 require "libyear_bundler/cli"
 require 'ostruct'
+require 'time'
 
 module LibyearBundler
   # Uses OptionParser from Ruby's stdlib to hand command-line arguments
@@ -51,6 +52,10 @@ https://github.com/jaredbeck/libyear-bundler/
 
         opts.on('--grand-total', 'Return value for given metric(s)') do
           @options.send('grand_total?=', true)
+        end
+
+        opts.on('--max-time=ISO8601STRING', 'Foo') do |iso8601|
+          @options.max_time = Time.iso8601(iso8601)
         end
       end
     end

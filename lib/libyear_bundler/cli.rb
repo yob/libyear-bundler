@@ -23,6 +23,10 @@ module LibyearBundler
     end
 
     def run
+      unless @options.max_time
+        @options.max_time = Time.now
+      end
+
       if @options.grand_total?
         grand_total
       else
@@ -61,7 +65,7 @@ module LibyearBundler
     end
 
     def bundle_outdated
-      BundleOutdated.new(@gemfile_path, release_date_cache).execute
+      BundleOutdated.new(@gemfile_path, release_date_cache, @options.max_time).execute
     end
 
     def release_date_cache

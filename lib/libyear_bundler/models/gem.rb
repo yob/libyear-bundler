@@ -1,19 +1,23 @@
 require 'net/http'
 require 'uri'
 require 'json'
+require 'time'
 
 module LibyearBundler
   module Models
     # Logic and information pertaining to the installed and newest versions of
     # a gem
     class Gem
-      def initialize(name, installed_version, newest_version, release_date_cache)
+      TIME_MAX = Time.utc(2022,3 ,1)
+
+      def initialize(name, installed_version, newest_version, release_date_cache, max_time)
         unless release_date_cache.nil? || release_date_cache.is_a?(ReleaseDateCache)
           raise TypeError, 'Invalid release_date_cache'
         end
         @name = name
+        @max_time = max_time
         @installed_version = installed_version
-        @newest_version = newest_version
+        @newest_version = newest_version_before_time_max || newest_version
         @release_date_cache = release_date_cache
       end
 
@@ -101,6 +105,19 @@ module LibyearBundler
 
       private
 
+      def newest_version_before_time_max
+        #spec = versions_sequence.select { |spec|
+        #  Time.iso8601(spec['created_at']) < TIME_MAX
+        #}.sort_by { |spec|
+        #  Time.iso8601(spec['created_at'])
+        #}.last
+
+        #spec['number'] if spec
+        versions_sequence.map { |v|
+          ::Gem::Version.new(v)
+        }.sort.last
+      end
+
       # docs: http://guides.rubygems.org/rubygems-org-api/#gem-version-methods
       # Versions are returned ordered by version number, descending
       def versions_sequence
@@ -108,7 +125,13 @@ module LibyearBundler
           uri = URI.parse("https://rubygems.org/api/v1/versions/#{name}.json")
           response = Net::HTTP.get_response(uri)
           parsed_response = JSON.parse(response.body)
-          parsed_response.map { |version| version['number'] }
+          parsed_response.select { |spec|
+            Time.iso8601(spec['created_at']) < @max_time
+          }.map { |spec|
+            spec['number']
+          }
+        rescue JSON::ParserError
+          []
         end
       end
     end

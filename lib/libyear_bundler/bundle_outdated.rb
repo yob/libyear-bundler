@@ -11,9 +11,10 @@ module LibyearBundler
     # Format of `bundle outdated --parseable` (BOP)
     BOP_FMT = /\A(?<name>[^ ]+) \(newest (?<newest>[^,]+), installed (?<installed>[^,)]+)/
 
-    def initialize(gemfile_path, release_date_cache)
+    def initialize(gemfile_path, release_date_cache, max_time)
       @gemfile_path = gemfile_path
       @release_date_cache = release_date_cache
+      @max_time = max_time
     end
 
     def execute
@@ -29,7 +30,8 @@ module LibyearBundler
           match['name'],
           match['installed'],
           match['newest'],
-          @release_date_cache
+          @release_date_cache,
+          @max_time,
         )
         gems.push(gem)
       end
